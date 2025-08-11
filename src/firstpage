@@ -1,0 +1,234 @@
+import React, { useState, useRef } from "react";
+
+export default function PassportUploadForm() {
+  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [form, setForm] = useState({
+    passportNumber: "",
+    firstName: "",
+    lastName: "",
+    nationality: "",
+    sex: "",
+    dateOfBirth: "",
+    placeOfBirth: "",
+    placeOfIssue: "",
+    maritalStatus: "",
+    dateOfIssue: "",
+    dateOfExpiry: "",
+    guardian: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  };
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form submitted", form, file);
+  };
+
+  const handleSelectFileClick = () => {
+    fileInputRef.current?.click();
+  };
+  
+
+  return (
+    <div className="max-w-4xl mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-2">
+        Upload Traveler's Front Passport Page
+      </h1>
+      <p className="text-gray-600 mb-6">
+        United Arab Emirates requires a scan of the traveler’s passport. Upload
+        a clear passport image and your details will be filled automatically.
+      </p>
+
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* LEFT: Upload Box */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center">
+            <label
+              htmlFor="passportUpload"
+              className="cursor-pointer flex flex-col items-center"
+            >
+              <div className="text-gray-500 text-4xl mb-2">⬆️</div>
+              <p className="text-gray-700 font-medium mb-2">
+                Drag and drop files to upload
+              </p>
+              <span className="text-sm text-gray-500 mb-2">or</span>
+              <button
+                type="button"
+                onClick={handleSelectFileClick}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Select file
+              </button>
+              <p className="text-gray-400 text-xs mt-2">
+                Supports JPEG, JPG, PDF, PNG. Max file size 5MB
+              </p>
+              <input
+                type="file"
+                id="passportUpload"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+            </label>
+
+            {file && (
+              <div className="mt-4 text-sm text-green-600">
+                Selected file: {file.name}
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT: Form fields */}
+          <div className="grid grid-cols-1 gap-4">
+            <input
+              type="text"
+              name="passportNumber"
+              placeholder="Passport Number *"
+              value={form.passportNumber}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2"
+              required
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                name="firstName"
+                placeholder="First Name *"
+                value={form.firstName}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              />
+              <input
+                type="text"
+                name="lastName"
+                placeholder="Last Name *"
+                value={form.lastName}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <select
+                name="nationality"
+                value={form.nationality}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              >
+                <option value="">Select Nationality *</option>
+                <option value="India">India</option>
+                <option value="USA">USA</option>
+                <option value="UAE">UAE</option>
+              </select>
+              <select
+                name="sex"
+                value={form.sex}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              >
+                <option value="">Sex *</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={form.dateOfBirth}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              />
+            </div>
+
+            <input
+              type="text"
+              name="placeOfBirth"
+              placeholder="Place of Birth *"
+              value={form.placeOfBirth}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2"
+              required
+            />
+
+            <input
+              type="text"
+              name="placeOfIssue"
+              placeholder="Place of Issue *"
+              value={form.placeOfIssue}
+              onChange={handleChange}
+              className="border border-gray-300 rounded px-3 py-2"
+              required
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <select
+                name="maritalStatus"
+                value={form.maritalStatus}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              >
+                <option value="">Marital Status *</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+              </select>
+              <input
+                type="date"
+                name="dateOfIssue"
+                value={form.dateOfIssue}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              />
+              <input
+                type="date"
+                name="dateOfExpiry"
+                value={form.dateOfExpiry}
+                onChange={handleChange}
+                className="border border-gray-300 rounded px-3 py-2"
+                required
+              />
+            </div>
+
+            <label className="flex items-center mt-4">
+              <input
+                type="checkbox"
+                name="guardian"
+                checked={form.guardian}
+                onChange={handleChange}
+                className="mr-2"
+              />
+              <span className="text-gray-700 text-sm">
+                This traveler will be a guardian of a child on this trip. Only
+                the mother or father can be a guardian.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-8 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+  );
+}

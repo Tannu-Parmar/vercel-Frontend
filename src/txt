@@ -1,0 +1,557 @@
+import React, { useState, useCallback } from 'react';
+import { useFormik } from 'formik';
+import * as Yup from "yup";
+import { Upload, X, AlertCircle, Camera, FileText } from 'lucide-react';
+
+const PassportUploadForm = () => {
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [ocrError, setOcrError] = useState('');
+
+  // Simple validation function
+  const validationSchema = Yup.object({
+    passportNumber: Yup.string().required("Required"),
+    firstName: Yup.string().required("Required"),
+    lastName: Yup.string().required("Required"),
+    nationality: Yup.string().required("Required"),
+    sex: Yup.string().required("Required"),
+    dateOfBirth: Yup.string().required("Required"),
+    placeOfBirth: Yup.string().required("Required"),
+    placeOfIssue: Yup.string().required("Required"),
+    maritalStatus: Yup.string().required("Required"),
+    dateOfIssue: Yup.string().required("Required"),
+    dateOfExpiry: Yup.string().required("Required"),
+    numberOfChildren: Yup.string().when("guardian", {
+      is: true,
+      then: Yup.string().required("Required"),
+    }),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      passportNumber: '',
+      firstName: '',
+      lastName: '',
+      nationality: '',
+      sex: '',
+      dateOfBirth: '',
+      placeOfBirth: '',
+      placeOfIssue: '',
+      maritalStatus: '',
+      dateOfIssue: '',
+      dateOfExpiry: '',
+      isGuardian: false,
+      numberOfChildren: ''
+    },
+    validationSchema,
+    onSubmit: (values) => {
+      console.log('Form submitted:', values);
+      alert('Form submitted successfully!');
+    }
+  });
+
+  
+
+  // Simple OCR simulation function
+  const extractTextFromImage = useCallback((file) => {
+    return new Promise((resolve) => {
+      // Simulate OCR processing time
+      setTimeout(() => {
+        // Mock OCR data based on the passport image shown
+        const mockOcrData = {
+          passportNumber: 'U9151554',
+          firstName: 'KAUSHAL SURESH',
+          lastName: 'PATEL',
+          nationality: 'India',
+          sex: 'Male',
+          dateOfBirth: '2000-04-10',
+          placeOfBirth: 'AHMEDABAD GUJARAT',
+          placeOfIssue: 'AHMEDABAD',
+          dateOfIssue: '2021-03-03',
+          dateOfExpiry: '2031-03-02'
+        };
+        resolve(mockOcrData);
+      }, 2000);
+    });
+  }, []);
+
+  const handleFileUpload = useCallback(async (file) => {
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+
+    if (!validTypes.includes(file.type)) {
+      setOcrError('Invalid file type. Please upload JPEG, JPG, PNG, or PDF files only.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setOcrError('File size exceeds 5MB limit.');
+      return;
+    }
+
+    setOcrError('');
+    setUploadedFile(file);
+    setIsProcessing(true);
+
+    try {
+      const extractedData = await extractTextFromImage(file);
+      
+      // Auto-fill form fields (excluding maritalStatus)
+      formik.setValues({
+        ...formik.values,
+        ...extractedData,
+        maritalStatus: formik.values.maritalStatus // Keep existing marital status
+      });
+      
+      setIsProcessing(false);
+    } catch (error) {
+      setOcrError('Failed to process document. Please try again.');
+      setIsProcessing(false);
+    }
+  }, [formik]);
+
+  const handleDrag = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  }, [handleFileUpload]);
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    setOcrError('');
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 bg-white">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          Upload Traveler's Front Passport Page
+        </h1>
+        <p className="text-gray-600 leading-relaxed">
+          United Arab Emirates requires a scan of the traveler's passport. Upload a clear passport image and your details will be
+          filled automatically. Atlys has built it's own OCR which is 99.9% accurate. However, it is mandatory to review the
+          information before submitting to ensure there are no mistakes. See detailed guidelines for the perfect passport{' '}
+          <a href="#" className="text-blue-600 hover:underline">here</a>.
+          Your visa can get rejected if these guidelines are not followed.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* File Upload Section */}
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Passport Front Page Image
+            </label>
+            <div
+              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                dragActive 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              {uploadedFile ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center">
+                    <FileText className="w-12 h-12 text-blue-500" />
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium">{uploadedFile.name}</p>
+                    <p>{(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Remove
+                  </button>
+                  {isProcessing && (
+                    <div className="flex items-center justify-center space-x-2 text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm">Processing document...</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-center">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-lg text-gray-600 mb-2">Drag and drop files to upload</p>
+                    <p className="text-sm text-gray-500 mb-4">or</p>
+                    <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                      <Camera className="w-4 h-4 mr-2" />
+                      Select file
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        onChange={(e) => handleFileUpload(e.target.files[0])}
+                      />
+                    </label>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    <p>Supports JPEG, JPG, PDF, PNG.</p>
+                    <p>Max file size 5MB</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            {ocrError && (
+              <div className="mt-2 flex items-center text-red-600 text-sm">
+                <AlertCircle className="w-4 h-4 mr-1" />
+                {ocrError}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Form Fields Section */}
+        <div className="space-y-6">
+          {/* Passport Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Passport Number <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="passportNumber"
+              value={formik.values.passportNumber}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                formik.touched.passportNumber && formik.errors.passportNumber
+                  ? 'border-red-500'
+                  : 'border-gray-300'
+              }`}
+              placeholder="Enter passport number"
+            />
+            {formik.touched.passportNumber && formik.errors.passportNumber && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.passportNumber}</p>
+            )}
+          </div>
+
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                value={formik.values.firstName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.firstName && formik.errors.firstName
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+                placeholder="First name"
+              />
+              {formik.touched.firstName && formik.errors.firstName && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.firstName}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                value={formik.values.lastName}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.lastName && formik.errors.lastName
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+                placeholder="Last name"
+              />
+              {formik.touched.lastName && formik.errors.lastName && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.lastName}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Nationality, Sex, Date of Birth */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nationality <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="nationality"
+                value={formik.values.nationality}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.nationality && formik.errors.nationality
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select...</option>
+                <option value="India">India</option>
+                <option value="USA">USA</option>
+                <option value="UK">UK</option>
+                <option value="Canada">Canada</option>
+              </select>
+              {formik.touched.nationality && formik.errors.nationality && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.nationality}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sex <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="sex"
+                value={formik.values.sex}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.sex && formik.errors.sex
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select...</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+              {formik.touched.sex && formik.errors.sex && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.sex}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date of Birth <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={formatDate(formik.values.dateOfBirth)}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.dateOfBirth && formik.errors.dateOfBirth
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              />
+              {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.dateOfBirth}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Place of Birth */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Place of Birth <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="placeOfBirth"
+              value={formik.values.placeOfBirth}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                formik.touched.placeOfBirth && formik.errors.placeOfBirth
+                  ? 'border-red-500'
+                  : 'border-gray-300'
+              }`}
+              placeholder="Enter place of birth"
+            />
+            {formik.touched.placeOfBirth && formik.errors.placeOfBirth && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.placeOfBirth}</p>
+            )}
+          </div>
+
+          {/* Place of Issue */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Place of Issue <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="placeOfIssue"
+              value={formik.values.placeOfIssue}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                formik.touched.placeOfIssue && formik.errors.placeOfIssue
+                  ? 'border-red-500'
+                  : 'border-gray-300'
+              }`}
+              placeholder="Enter place of issue"
+            />
+            {formik.touched.placeOfIssue && formik.errors.placeOfIssue && (
+              <p className="mt-1 text-sm text-red-600">{formik.errors.placeOfIssue}</p>
+            )}
+          </div>
+
+          {/* Marital Status and Dates */}
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Marital Status <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="maritalStatus"
+                value={formik.values.maritalStatus}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.maritalStatus && formik.errors.maritalStatus
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              >
+                <option value="">Select...</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+              </select>
+              {formik.touched.maritalStatus && formik.errors.maritalStatus && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.maritalStatus}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date of Issue <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="dateOfIssue"
+                value={formatDate(formik.values.dateOfIssue)}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.dateOfIssue && formik.errors.dateOfIssue
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              />
+              {formik.touched.dateOfIssue && formik.errors.dateOfIssue && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.dateOfIssue}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date of Expiry <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                name="dateOfExpiry"
+                value={formatDate(formik.values.dateOfExpiry)}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  formik.touched.dateOfExpiry && formik.errors.dateOfExpiry
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                }`}
+              />
+              {formik.touched.dateOfExpiry && formik.errors.dateOfExpiry && (
+                <p className="mt-1 text-sm text-red-600">{formik.errors.dateOfExpiry}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Guardian Checkbox and Children */}
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3">
+              <input
+                type="checkbox"
+                name="isGuardian"
+                checked={formik.values.isGuardian}
+                onChange={formik.handleChange}
+                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <div className="text-sm text-gray-700">
+                This traveler will be a guardian of a child on this trip. Only the mother or father can be a guardian.
+              </div>
+            </div>
+            
+            {formik.values.isGuardian && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Number of Children
+                </label>
+                <select
+                  name="numberOfChildren"
+                  value={formik.values.numberOfChildren}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select an item</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5+</option>
+                </select>
+                {formik.values.isGuardian && !formik.values.numberOfChildren && (
+                  <p className="mt-1 text-sm text-red-600">Select number of children</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <div className="pt-6">
+            <button
+              type="button"
+              onClick={formik.handleSubmit}
+              disabled={isProcessing}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? 'Processing...' : 'Submit Application'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PassportUploadForm;
