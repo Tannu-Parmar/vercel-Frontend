@@ -68,21 +68,52 @@ const useFormik = (config) => {
     }
   };
 
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   const newErrors = {};
+  //   Object.keys(values).forEach(key => {
+  //     const error = validateField(key, values[key]);
+  //     if (error) newErrors[key] = error;
+  //   });
+    
+  //   setErrors(newErrors);
+  //   setTouched(Object.keys(values).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
+    
+  //   if (Object.keys(newErrors).length === 0) {
+  //     config.onSubmit(values);
+  //   }
+  // };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const newErrors = {};
+  
+    // Validate all fields
     Object.keys(values).forEach(key => {
       const error = validateField(key, values[key]);
       if (error) newErrors[key] = error;
     });
-    
+  
+    // Update errors and touched state
     setErrors(newErrors);
-    setTouched(Object.keys(values).reduce((acc, key) => ({ ...acc, [key]: true }), {}));
-    
+    setTouched(
+      Object.keys(values).reduce((acc, key) => ({ ...acc, [key]: true }), {})
+    );
+  
+    // If no errors, submit the form and reset the values
     if (Object.keys(newErrors).length === 0) {
       config.onSubmit(values);
+  
+      // Clear the form after successful submit
+      const clearedValues = Object.keys(values).reduce((acc, key) => {
+        acc[key] = ""; // or null, depending on field type
+        return acc;
+      }, {});
+  
+      setValues(clearedValues);
     }
   };
+  
 
   return {
     values,
@@ -95,10 +126,10 @@ const useFormik = (config) => {
   };
 };
 
-// Google Cloud Vision API OCR function
+// Google Cloud Vision API OCR function 
 const processWithGoogleVision = async (imageBase64, apiKey) => {
   try {
-    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apikey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -138,12 +169,12 @@ const processWithGoogleVision = async (imageBase64, apiKey) => {
   }
 };
 
-// Advanced passport text parsing function
+// Advanced passport text parsing function  
 const parsePassportText = (text) => {
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   const extractedData = {};
 
-  // Patterns for different passport data
+  // Patterns for different passport data 
   const patterns = {
     passportNumber: /^[A-Z]\d{7,9}$/,
     mrzLine: /^P<[A-Z]{3}[A-Z<]+<<[A-Z<]+$/,
@@ -152,7 +183,7 @@ const parsePassportText = (text) => {
     nationality: /^(INDIA|INDIAN|USA|AMERICAN|UK|BRITISH|CANADA|CANADIAN|AUSTRALIA|AUSTRALIAN)$/i
   };
 
-  // Extract passport number
+  // Extract passport number 
   for (const line of lines) {
     if (patterns.passportNumber.test(line)) {
       extractedData.passportNumber = line;
@@ -160,7 +191,7 @@ const parsePassportText = (text) => {
     }
   }
 
-  // Extract names and other data from MRZ (Machine Readable Zone)
+  // Extract names and other data from MRZ (Machine Readable Zone)  
   const mrzLine = lines.find(line => patterns.mrzLine.test(line));
   if (mrzLine) {
     const mrzParts = mrzLine.split('<<');
@@ -173,7 +204,7 @@ const parsePassportText = (text) => {
     }
   }
 
-  // Extract dates
+  // Extract dates 
   const dates = [];
   for (const line of lines) {
     const dateMatch = line.match(patterns.datePattern);
@@ -183,7 +214,7 @@ const parsePassportText = (text) => {
     }
   }
 
-  // Assign dates based on context and logic
+  // Assign dates based on context and logic 
   if (dates.length >= 2) {
     // Usually birth date comes first, then issue date, then expiry date
     const sortedDates = dates.sort();
@@ -209,7 +240,7 @@ const parsePassportText = (text) => {
     }
   }
 
-  // Extract sex from common indicators
+  // Extract sex from common indicators 
   const sexIndicators = ['MALE', 'FEMALE', 'M', 'F'];
   for (const line of lines) {
     const upperLine = line.toUpperCase();
@@ -287,7 +318,7 @@ const PassportForm = () => {
 
   const handleDrop = useCallback(async (e) => {
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); 
     setDragActive(false);
     
     const files = Array.from(e.dataTransfer.files);
@@ -412,7 +443,7 @@ const PassportForm = () => {
       </div>
 
       {/* API Key Input */}
-      <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      {/* <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h3 className="text-sm font-semibold text-blue-800 mb-2">Google Cloud Vision API Configuration</h3>
         <div className="flex gap-2">
           <div className="flex-1 relative">
@@ -435,7 +466,7 @@ const PassportForm = () => {
         <p className="text-xs text-blue-600 mt-1">
           Get your API key from <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="underline">Google Cloud Console</a>
         </p>
-      </div>
+      </div> */}
 
       <div className="space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -532,7 +563,7 @@ const PassportForm = () => {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                      disabled={!apiKey.trim()}
+                      // disabled={!apiKey.trim()}
                     >
                       Select file
                     </button>
@@ -541,11 +572,11 @@ const PassportForm = () => {
                     Supports JPEG, JPG, PNG.<br />
                     Max file size 5MB
                   </p>
-                  {!apiKey.trim() && (
+                  {/* {!apiKey.trim() && (
                     <p className="text-sm text-red-500">
                       Please enter your Google Vision API key above
                     </p>
-                  )}
+                  )} */}
                 </div>
               )}
               
@@ -585,12 +616,13 @@ const PassportForm = () => {
           </div>
 
           {/* Form Fields */}
-          <div className="space-y-6">
+          <div className="mt-10 space-y-6">
             <InputField 
               name="passportNumber" 
-              label="Passport Number" 
+              label="Passport Number"
               required 
               icon={Hash}
+              formik={formik} // Pass formik here
             />
             
             <div className="grid grid-cols-2 gap-4">
@@ -671,7 +703,7 @@ const PassportForm = () => {
             </div>
 
             {/* Guardian Section */}
-            <div className="border-t pt-6">
+            <div>
               <div className="flex items-center space-x-3 mb-4">
                 <input
                   type="checkbox"
@@ -698,7 +730,7 @@ const PassportForm = () => {
         </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-6 border-t">
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={formik.handleSubmit}

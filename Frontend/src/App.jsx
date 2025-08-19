@@ -14,7 +14,7 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         <PassportScanner />
         {/* <Passportfirstpage /> */}
-        {/* <Passportlastpage /> */}
+        <Passportlastpage />
       </div>
     </>
   )
