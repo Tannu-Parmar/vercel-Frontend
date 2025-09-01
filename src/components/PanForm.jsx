@@ -175,7 +175,7 @@ const SimplePanCardForm = () => {
 
     if (file) {
       try {
-        const response = await fetch('http://localhost:3001/api/extract/pan-card', {
+        const response = await fetch('https://vercel-backend-976h.onrender.com/api/extract/pan-card', {
           method: 'POST',
           body: data,
         })

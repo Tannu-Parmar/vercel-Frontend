@@ -404,7 +404,7 @@ const CombinedPassportForm = () => {
 
     if (file) {
       try {
-        const response = await fetch('http://localhost:3001/api/extract/passport/1', {
+        const response = await fetch('https://vercel-backend-976h.onrender.com/api/extract/passport/1', {
           method: 'POST',
           body: data,
         })
@@ -450,7 +450,7 @@ const CombinedPassportForm = () => {
 
       if (file) {
         try {
-          const response = await fetch('http://localhost:3001/api/extract/passport/2', {
+          const response = await fetch('https://vercel-backend-976h.onrender.com/api/extract/passport/2', {
             method: 'POST',
             body: data,
           })
@@ -886,7 +886,7 @@ const CombinedPassportForm = () => {
                 Next
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={handleProcessFrontImage}
                 type="submit"
                 className="btn btn-secondary p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-colors font-medium text-lg shadow-lg"
               >

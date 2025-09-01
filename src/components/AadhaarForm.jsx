@@ -176,7 +176,7 @@ const SimpleAadhaarForm = () => {
 
     if (file) {
       try {
-        const response = await fetch('http://localhost:3001/api/extract/aadhaar/1', {
+        const response = await fetch('https://vercel-backend-976h.onrender.com/api/extract/aadhaar/1', {
           method: 'POST',
           body: data,
         })
