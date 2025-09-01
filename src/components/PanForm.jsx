@@ -187,7 +187,7 @@ const SimplePanCardForm = () => {
         // Convert dates to proper format and set form data
         setFormData({
           panNumber: result.data.panNumber || '',
-          nameAsPerPancard: result.data.name || '',
+          nameAsPerPanCard: result.data.name || '',
         })
 
         alert('Front page passport information extracted successfully!')
