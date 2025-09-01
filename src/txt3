@@ -1,0 +1,93 @@
+import React from 'react'
+import { useFormik } from 'formik'
+import * as Yup from 'yup'
+import { extractTextFromImage } from '../api/gemini'
+import { useNavigate } from 'react-router-dom'
+
+export default function PanForm() {
+  const navigate = useNavigate()
+
+  const formik = useFormik({
+    initialValues: {
+      panNumber: '',
+      fullName: '',
+      dateOfBirth: '',
+      image: null,
+    },
+    validationSchema: Yup.object({
+      panNumber: Yup.string().required('Required'),
+      fullName: Yup.string().required('Required'),
+    }),
+    onSubmit: (values) => {
+      console.log('PAN Card Details:', values)
+    },
+  })
+
+  const handleFileChange = async (e) => {
+    const file = e.currentTarget.files[0]
+    if (!file) return
+    formik.setFieldValue('image', file)
+
+    const data = await extractTextFromImage(file)
+    formik.setValues({
+      ...formik.values,
+      ...data,
+    })
+  }
+
+  return (
+    <form className="p-8 max-w-2xl mx-auto bg-white shadow-md rounded" onSubmit={formik.handleSubmit}>
+      <div className="mb-6">
+        <label className="block mb-2">PAN Card Image</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="block w-full text-sm text-gray-500"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <input
+          type="text"
+          name="panNumber"
+          placeholder="PAN Number"
+          onChange={formik.handleChange}
+          value={formik.values.panNumber}
+          className="input"
+        />
+        <input
+          type="text"
+          name="fullName"
+          placeholder="Full Name"
+          onChange={formik.handleChange}
+          value={formik.values.fullName}
+          className="input"
+        />
+        <input
+          type="text"
+          name="dateOfBirth"
+          placeholder="Date of Birth (DD/MM/YYYY)"
+          onChange={formik.handleChange}
+          value={formik.values.dateOfBirth}
+          className="input"
+        />
+      </div>
+      <div className="flex mt-6 gap-4">
+        <button type="button" onClick={() => navigate('/aadhaar')} className="btn btn-secondary">
+          Previous
+        </button>
+        <button type="submit" className="btn btn-accent">
+          Submit
+        </button>
+      </div>
+    </form>
+  )
+}
+
+// ;<button
+//   type="submit"
+//   onClick={handleSubmit}
+//   className="btn btn-accent p-4 bg-gradient-to-r from-green-600 to-yellow-600 text-white py-4 rounded-lg hover:from-green-700 hover:to-yellow-700 transition-colors font-medium text-lg shadow-lg"
+// >
+//   Submit
+// </button>

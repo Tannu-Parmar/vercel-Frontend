@@ -1,0 +1,103 @@
+// PassportForm.js
+import React from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { extractTextFromImage } from "../api/gemini";
+import { useNavigate } from "react-router-dom";
+
+export default function PassportForm() {
+  const navigate = useNavigate();
+  const formik = useFormik({
+    initialValues: {
+      passportNumber: "",
+      firstName: "",
+      lastName: "",
+      nationality: "",
+      sex: "",
+      dateOfBirth: "",
+      placeOfBirth: "",
+      placeOfIssue: "",
+      maritalStatus: "",
+      dateOfIssue: "",
+      dateOfExpiry: "",
+      guardian: false,
+      numberOfChildren: "",
+      frontImage: null,
+      backImage: null,
+      fatherName: "",
+      motherName: "",
+    },
+    validationSchema: Yup.object({
+      passportNumber: Yup.string().required("Required"),
+      firstName: Yup.string().required("Required"),
+      lastName: Yup.string().required("Required"),
+      maritalStatus: Yup.string().required("Required"),
+    }),
+    onSubmit: values => {
+      // Log to console
+      console.log("Passport Details:", values);
+    },
+  });
+
+  const handleFileChange = async (e, side) => {
+    const file = e.currentTarget.files;
+    if (!file) return;
+    formik.setFieldValue(side === "front" ? "frontImage" : "backImage", file);
+
+    // Only handle autofill for the front page
+    if (side === "front") {
+      const extracted = await extractTextFromImage(file);
+      formik.setValues({
+        ...formik.values,
+        ...extracted,
+        maritalStatus: formik.values.maritalStatus, // never overwrite this field 
+      });
+    }
+  };
+
+  return (
+    <form className="p-8 max-w-2xl mx-auto bg-white shadow-md rounded" onSubmit={formik.handleSubmit}>
+      {/* File upload and autofill */}
+      <div className="flex gap-4 mb-6">
+        <div>
+          <label className="block mb-2">Passport Front Page</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileChange(e, "front")}
+            className="block w-full text-sm text-gray-500"
+          />
+        </div>
+        <div>
+          <label className="block mb-2">Passport Back Page</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileChange(e, "back")}
+            className="block w-full text-sm text-gray-500"
+          />
+        </div>
+      </div>
+      {/* Form fields */}
+      <div className="grid grid-cols-2 gap-4">
+        <input type="text" name="passportNumber" placeholder="Passport Number" onChange={formik.handleChange} value={formik.values.passportNumber} className="input" />
+        <input type="text" name="firstName" placeholder="First Name" onChange={formik.handleChange} value={formik.values.firstName} className="input" />
+        <input type="text" name="lastName" placeholder="Last Name" onChange={formik.handleChange} value={formik.values.lastName} className="input" />
+        {/* ... other fields ... */}
+        <select name="maritalStatus" onChange={formik.handleChange} value={formik.values.maritalStatus} className="input">
+          <option value="">Select Marital Status</option>
+          <option value="Single">Single</option>
+          <option value="Married">Married</option>
+        </select>
+      </div>
+      <div className="flex mt-6 gap-4">
+        <button type="button" onClick={() => navigate("/aadhaar")} className="btn btn-primary">
+          Next
+        </button>
+        <button type="submit" className="btn btn-secondary">
+          Submit
+        </button>
+      </div>
+    </form>
+  );
+}

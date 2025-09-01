@@ -1,0 +1,111 @@
+import React from "react";
+import { useFormik } from "formik";
+import * as Yup from "yup";
+import { extractTextFromImage } from "../api/gemini";
+import { useNavigate } from "react-router-dom";
+
+export default function AadhaarForm() {
+  const navigate = useNavigate();
+
+  const formik = useFormik({
+    initialValues: {
+      aadhaarNumber: "",
+      fullName: "",
+      dateOfBirth: "",
+      gender: "",
+      frontImage: null,
+      backImage: null
+    },
+    validationSchema: Yup.object({
+      aadhaarNumber: Yup.string().required("Required"),
+      fullName: Yup.string().required("Required"),
+    }),
+    onSubmit: values => {
+      console.log("Aadhaar Card Details:", values);
+    },
+  });
+
+  const handleFileChange = async (e, side) => {
+    const file = e.currentTarget.files[0];
+    if (!file) return;
+    formik.setFieldValue(side === "front" ? "frontImage" : "backImage", file);
+
+    if (side === "front") {
+      const data = await extractTextFromImage(file);
+      formik.setValues({
+        ...formik.values,
+        ...data,
+      });
+    }
+  };
+
+  return (
+    <form className="p-8 max-w-2xl mx-auto bg-white shadow-md rounded" onSubmit={formik.handleSubmit}>
+      <div className="flex gap-4 mb-6">
+        <div>
+          <label className="block mb-2">Aadhaar Front</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileChange(e, "front")}
+            className="block w-full text-sm text-gray-500"
+          />
+        </div>
+        <div>
+          <label className="block mb-2">Aadhaar Back</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileChange(e, "back")}
+            className="block w-full text-sm text-gray-500"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <input
+          type="text"
+          name="aadhaarNumber"
+          placeholder="Aadhaar Number"
+          onChange={formik.handleChange}
+          value={formik.values.aadhaarNumber}
+          className="input"
+        />
+        <input
+          type="text"
+          name="fullName"
+          placeholder="Full Name"
+          onChange={formik.handleChange}
+          value={formik.values.fullName}
+          className="input"
+        />
+        <input
+          type="text"
+          name="dateOfBirth"
+          placeholder="Date of Birth (DD/MM/YYYY)"
+          onChange={formik.handleChange}
+          value={formik.values.dateOfBirth}
+          className="input"
+        />
+        <input
+          type="text"
+          name="gender"
+          placeholder="Gender"
+          onChange={formik.handleChange}
+          value={formik.values.gender}
+          className="input"
+        />
+      </div>
+      <div className="flex mt-6 gap-4">
+        <button type="button" onClick={() => navigate("/")} className="btn btn-secondary">
+          Previous
+        </button>
+        <button type="button" onClick={() => navigate("/pan")} className="btn btn-primary">
+          Next
+        </button>
+        <button type="submit" className="btn btn-accent">
+          Submit
+        </button>
+      </div>
+    </form>
+  );
+}
