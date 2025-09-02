@@ -886,7 +886,7 @@ const CombinedPassportForm = () => {
                 Next
               </button>
               <button
-                onClick={handleProcessFrontImage}
+                onClick={handleSubmit}
                 type="submit"
                 className="btn btn-secondary p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-colors font-medium text-lg shadow-lg"
               >
